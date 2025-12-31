@@ -15,6 +15,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func SetupRouter() *gin.Engine {
+	r := gin.Default()
+
+    // Config CORS (biarkan sama)
+    r.Use(cors.Default())
+
+	// Route Swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Auth Routes
+	r.POST("/register", controllers.Register)
+	r.POST("/login", controllers.Login)
+
+	// Task Routes
+	taskRoutes := r.Group("/tasks")
+	taskRoutes.Use(middlewares.AuthMiddleware())
+	{
+		taskRoutes.GET("/", controllers.FindTasks)
+		taskRoutes.POST("/", controllers.CreateTask)
+		taskRoutes.GET("/:id", controllers.FindTaskByID)
+		taskRoutes.PUT("/:id", controllers.UpdateTask)
+		taskRoutes.DELETE("/:id", controllers.DeleteTask)
+	}
+
+    // Route Seeding
+	r.POST("/seed", middlewares.AuthMiddleware(), controllers.SeedTasks)
+
+	return r
+}
+
 // @title           Task Tracker API
 // @version         1.0
 // @description     Aplikasi Task Tracker dengan Golang GIN
@@ -33,41 +63,11 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
+// 2. MAIN FUNCTION JADI LEBIH BERSIH
 func main() {
-	config.ConnectDatabase()
-	r := gin.Default()
-
-	// --- PASANG CORS DI SINI ---
-	// Kita atur supaya SEMUA orang boleh akses (Mode Development)
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-
-	// --- ROUTE SWAGGER ---
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	config.ConnectDatabase() // Tetap connect DB di main
 	
-	// Penting: Izinkan Header Authorization (biar token JWT bisa lewat)
-	corsConfig.AddAllowHeaders("Authorization")
+    r := SetupRouter() // Panggil fungsi setup tadi
 
-	// 3. Setup Routes
-	//User
-	r.POST("/register", controllers.Register)
-	r.POST("/login", controllers.Login)
-
-	//proteced
-	protected := r.Group("/")
-    protected.Use(middlewares.AuthMiddleware()) // <--- Pasang Satpam
-    {
-        // Masukkan semua route Task ke sini!
-        protected.GET("/tasks", controllers.FindTasks)
-        protected.POST("/tasks", controllers.CreateTask) // <--- Ini yang penting
-		protected.GET("/tasks/:id", controllers.FindTaskByID)
-		protected.PUT("/tasks/:id", controllers.UpdateTask)
-		protected.DELETE("/tasks/:id", controllers.DeleteTask)
-
-		protected.POST("/seed", controllers.SeedTasks)
-	}
-
-
-	// 4. Jalankan Server
-	r.Run("localhost:8081") // Kita pakai port 8081 seperti tadi
+	r.Run("localhost:8081")
 }
