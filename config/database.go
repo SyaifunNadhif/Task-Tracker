@@ -71,6 +71,9 @@ func ConnectDatabase() {
 	fmt.Println("🚀 Menjalankan Auto Migration...")
 	database.AutoMigrate(&models.Task{})
 
+	// Update baris ini:
+	database.AutoMigrate(&models.Task{}, &models.User{})
+
 	DB = database
 	fmt.Println("✅ Koneksi & Migrasi Selesai!")
 }

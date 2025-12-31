@@ -1,0 +1,287 @@
+basePath: /
+definitions:
+  helpers.Meta:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  helpers.Response:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/helpers.Meta'
+    type: object
+  inputs.LoginInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  inputs.RegisterInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  inputs.TaskInput:
+    properties:
+      description:
+        example: Mencoba koneksi database
+        type: string
+      status:
+        example: Pending
+        type: string
+      title:
+        example: Belajar Golang
+        type: string
+    required:
+    - description
+    - title
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Aplikasi Task Tracker dengan Golang GIN
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Task Tracker API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Masuk untuk mendapatkan Token JWT
+      parameters:
+      - description: Login Credential
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      summary: Login User
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Membuat akun user baru
+      parameters:
+      - description: Data Register
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      summary: Mendaftarkan User Baru
+      tags:
+      - auth
+  /seed:
+    post:
+      description: Membuat 50 data tugas palsu secara otomatis
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      security:
+      - BearerAuth: []
+      summary: Generate Dummy Data
+      tags:
+      - tasks
+  /tasks:
+    get:
+      description: Mengambil semua tugas milik user yang sedang login (pagination)
+      parameters:
+      - description: Halaman ke berapa
+        in: query
+        name: page
+        type: integer
+      - description: Jumlah data per halaman
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      security:
+      - BearerAuth: []
+      summary: Melihat Daftar Tugas
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan data tugas baru ke database
+      parameters:
+      - description: Data Task
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.TaskInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      security:
+      - BearerAuth: []
+      summary: Membuat Tugas Baru
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      description: Menghapus tugas berdasarkan ID secara permanen
+      parameters:
+      - description: ID Tugas
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus Tugas
+      tags:
+      - tasks
+    get:
+      description: Melihat detail satu tugas berdasarkan ID
+      parameters:
+      - description: ID Tugas
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail Tugas
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: Mengubah data tugas (Judul, Deskripsi, Status)
+      parameters:
+      - description: ID Tugas
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data Update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/inputs.TaskInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/helpers.Response'
+      security:
+      - BearerAuth: []
+      summary: Update Tugas
+      tags:
+      - tasks
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
